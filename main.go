@@ -215,6 +215,14 @@ func setupTimeFunction(vm *otto.Otto) {
 			}, delay
 		}
 	}
+	clear := func(m map[int]chan <-struct{},i int) {
+		mutex.Lock()
+		defer mutex.Unlock()
+		if v, ok := m[i]; ok {
+			v <- struct {}{}
+			delete(m,i)
+		}
+	}
 	vm.Set("setTimeout", func(call otto.FunctionCall) otto.Value {
 		//var timeoutID = window.setTimeout(func, [delay, param1, param2, ...]);
 		//var timeoutID = window.setTimeout(code, [delay]);
@@ -281,5 +289,21 @@ func setupTimeFunction(vm *otto.Otto) {
 			panic(e)
 		}
 		return v
+	})
+	vm.Set("clearTimeout",func(call otto.FunctionCall)otto.Value{
+		i,e:=call.Argument(0).ToInteger()
+		if e != nil{
+			panic(e)
+		}
+		clear(timeout,int(i))
+		return otto.UndefinedValue()
+	})
+	vm.Set("clearInterval",func(call otto.FunctionCall)otto.Value{
+		i,e:=call.Argument(0).ToInteger()
+		if e != nil{
+			panic(e)
+		}
+		clear(interval,int(i))
+		return otto.UndefinedValue()
 	})
 }
